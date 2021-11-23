@@ -27,18 +27,46 @@ def shift_image(image: np.ndarray, x: int, y: int):
     return image_shifted
 
 
-def generate_data(background: np.ndarray, obj: np.ndarray):
-    x, y = np.random.randint(1, 10, size=2)
-    background_shifted = shift_image(background, x, y)
+def get_object_shift(amplitude, frequency, time):
+    return amplitude * np.sin(2*np.pi*frequency * time)
 
-    image_x, image_y = np.random.randint(1, 4, size=2)
-    obj_mask = get_object_mask(obj)
-    background_shifted_img = Image.fromarray(background_shifted)
-    obj_img = Image.fromarray(obj)
-    background_shifted_img.paste(
-        obj_img,
-        (background_shifted_img.size[0] // 2 + x + image_x, background_shifted_img.size[1] // 2 + y + image_y),
-        mask=obj_mask
-    )
 
-    return np.asarray(background_shifted_img)
+def generate_data(
+        obj1: np.ndarray,
+        obj2: np.ndarray,
+        obj1_freq: float,
+        obj1_ampl: int,
+        obj2_freq: float,
+        obj2_ampl: int,
+        time_step: float,
+        generation_time: float
+):
+    generated_data = []
+    elapsed_time = 0
+    while elapsed_time < generation_time:
+        # get objects shift
+        obj1_shift = int(get_object_shift(obj1_ampl, obj1_freq, elapsed_time))
+        obj2_shift = int(get_object_shift(obj2_ampl, obj2_freq, elapsed_time))
+
+        # shift the fist object (background)
+        obj1_shifted = shift_image(obj1, x=0, y=obj1_shift)
+
+        # set the second object coordinates on the first object
+        # accounting for first and second objects shifts
+        # (in the center right now)
+        obj2_x_coord = int(obj1.shape[1] // 2)
+        obj2_y_coord = int(obj1.shape[0] // 2 + obj1_shift + obj2_shift)
+
+        # get object 2 mask
+        obj2_mask = get_object_mask(obj2)
+
+        # place object 2 on object 1 as image
+        obj1_image = Image.fromarray(obj1_shifted)
+        obj2_image = Image.fromarray(obj2)
+
+        obj1_image.paste(obj2_image, (obj2_x_coord, obj2_y_coord), mask=obj2_mask)
+
+        generated_data.append(np.asarray(obj1_image))
+        elapsed_time += time_step
+
+    return generated_data
