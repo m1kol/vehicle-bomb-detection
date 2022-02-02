@@ -38,6 +38,7 @@ def generate_data(
         obj1_ampl: int,
         obj2_freq: float,
         obj2_ampl: int,
+        obj2_coords,
         time_step: float,
         generation_time: float
 ):
@@ -54,8 +55,10 @@ def generate_data(
         # set the second object coordinates on the first object
         # accounting for first and second objects shifts
         # (in the center right now)
-        obj2_x_coord = int(obj1.shape[1] // 2)
-        obj2_y_coord = int(obj1.shape[0] // 2 + obj1_shift + obj2_shift)
+        # obj2_x_coord = int(obj1.shape[1] // 2)
+        # obj2_y_coord = int(obj1.shape[0] // 2 + obj1_shift + obj2_shift)
+        obj2_x_coord, obj2_y_coord = obj2_coords
+        obj2_y_coord += obj1_shift + obj2_shift
 
         # get object 2 mask
         obj2_mask = get_object_mask(obj2)
@@ -66,7 +69,7 @@ def generate_data(
 
         obj1_image.paste(obj2_image, (obj2_x_coord, obj2_y_coord), mask=obj2_mask)
 
-        generated_data.append(np.asarray(obj1_image))
+        generated_data.append(np.asarray(obj1_image, dtype=np.uint8))
         elapsed_time += time_step
 
     return generated_data
