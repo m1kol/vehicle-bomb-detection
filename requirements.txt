@@ -1,0 +1,19 @@
+# general libraries
+numpy
+pandas
+matplotlib
+scikit-learn
+
+# deep learning libraries
+# tensorflow
+# torch
+# torchvision
+
+# image processing libraries
+opencv-python
+Pillow
+
+
+# jupyter for development
+jupyter
+jedi==0.17.2

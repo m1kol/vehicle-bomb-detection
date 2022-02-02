@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "diplom"
+version = "0.1.0"
+description = ""
+authors = ["Mihail Kolesov <kolesov.ma@phystech.edu>"]
+
+[tool.poetry.dependencies]
+python = ">=3.7,<3.11"
+numpy = "*"
+pandas = "*"
+matplotlib = "*"
+scikit-learn = "*"
+opencv-python = "*"
+tensorflow = "*"
+torch = "latest"
+
+[tool.poetry.dev-dependencies]
+jupyter = "*"
+jedi = "0.17.2"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
