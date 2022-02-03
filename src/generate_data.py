@@ -28,7 +28,7 @@ def shift_image(image: np.ndarray, x: int, y: int):
 
 
 def get_object_shift(amplitude, frequency, time):
-    return amplitude * np.sin(2*np.pi*frequency * time)
+    return amplitude * np.sin(2 * np.pi * frequency * time)
 
 
 def generate_data(
