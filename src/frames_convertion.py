@@ -2,9 +2,14 @@ import numpy as np
 
 
 class FrameConverter:
-    def __init__(self, convert_type: str, epsilon, window_size: int = None):
+    """
+    A class to perform image conversion to inter-frames differences.
+
+    :param convert_type: A type of conversion to perform. One of ``freq`` or ``ampl``.
+    :param epsilon: An epsion value for frequency (``freq``) conversion type.
+    """
+    def __init__(self, convert_type: str, epsilon: int = None):
         self.convert_type = convert_type
-        self.window_size = window_size
         self.epsilon = epsilon
 
     @staticmethod
