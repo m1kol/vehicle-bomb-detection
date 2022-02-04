@@ -66,7 +66,7 @@ def get_frequency_diff(frames, epsilon: int):
         ]
     )
 
-    return 255 * interframe_diffs.mean(axis=0).astype(np.uint8)
+    return 255 * np.divide(interframe_diffs, len(frames)).astype(np.uint8)
 
 def get_aplitude_diff(frames):
     interframe_diffs = np.array(
@@ -76,7 +76,7 @@ def get_aplitude_diff(frames):
         ]
     )
 
-    return interframe_diffs.mean(axis=0).astype(np.uint8)
+    return np.divide(interframe_diffs, len(frames)).astype(np.uint8)
 
 
 def frequency_conversion(frames, epsilon, compute_window: int = 2, step: int = 1):
