@@ -66,7 +66,7 @@ def get_frequency_diff(frames, epsilon: int):
         ]
     )
 
-    return 255 * np.divide(interframe_diffs, len(frames)).astype(np.uint8)
+    return 255 * interframe_diffs.mean(axis=0).astype(np.uint8)  # 255 * np.divide(interframe_diffs, len(frames)).astype(np.uint8)
 
 def get_aplitude_diff(frames):
     interframe_diffs = np.array(
