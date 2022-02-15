@@ -13,13 +13,7 @@ def get_object_mask(obj: np.ndarray):
 
 
 def shift_image(image: np.ndarray, x: int, y: int):
-    shift_matrix = np.array(
-        [
-            [1, 0, x],
-            [0, 1, y]
-        ],
-        dtype=np.float32
-    )
+    shift_matrix = np.array([[1, 0, x], [0, 1, y]], dtype=np.float32)
 
     (rows, cols) = image.shape[:2]
     image_shifted = cv2.warpAffine(image, shift_matrix, (cols, rows))
@@ -32,15 +26,15 @@ def get_object_shift(amplitude, frequency, time):
 
 
 def generate_data(
-        obj1: np.ndarray,
-        obj2: np.ndarray,
-        obj1_freq: float,
-        obj1_ampl: int,
-        obj2_freq: float,
-        obj2_ampl: int,
-        obj2_coords,
-        time_step: float,
-        generation_time: float
+    obj1: np.ndarray,
+    obj2: np.ndarray,
+    obj1_freq: float,
+    obj1_ampl: int,
+    obj2_freq: float,
+    obj2_ampl: int,
+    obj2_coords,
+    time_step: float,
+    generation_time: float,
 ):
     generated_data = []
     elapsed_time = 0
