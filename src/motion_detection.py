@@ -3,43 +3,44 @@ import numpy as np
 import cv2
 
 
+def convert_to_grayscale(img: np.ndarray, ksize: tuple = (3, 3)) -> np.ndarray:
+    # assuming that if shape is equal to 2 than it's already in a grayscale
+    if len(img.shape) > 2:
+        img = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+        img = cv2.GaussianBlur(img, ksize=ksize, sigmaX=0)
+
+    return img
+
+
 class BasicDetector:
     """
     Basic detector that uses a reference background image to get the difference with
     the current frame.
     """
 
-    def __init__(self, background, thresh):
+    def __init__(self, background, threshold):
         """
         Constructor method.
 
         :param background: Background reference image.
         :type background: np.ndarray
-        :param thresh: Threshold for an inter-frame difference.
-        :type thresh: int
         """
-        self.background = cv2.cvtColor(background, cv2.COLOR_RGB2GRAY)
-        self.thresh = thresh
+        self.background = convert_to_grayscale(background)
+        
+        if threshold:
+            self.threshold = threshold
+        else:
+            self.threshold = 125
 
-    def detect(self, frame, threshold=None):
-        if not threshold:
-            threshold = self.thresh
-
-        frame = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
-        frame = cv2.GaussianBlur(frame, ksize=(5, 5), sigmaX=0)
-
-        frame_diff = cv2.absdiff(self.background, frame)
-        frame_diff = cv2.dilate(frame_diff, np.ones((5, 5)), 1)
-        frame_diff = cv2.threshold(
-            frame_diff, thresh=threshold, maxval=255, type=cv2.THRESH_BINARY
-        )[1]
+    def detect(self, frame, diff_threshold: int = None, area_threshold: int=50):
+        frame_diff = self.get_frame_difference(frame, diff_threshold)
 
         contours, _ = cv2.findContours(
             frame_diff, mode=cv2.RETR_EXTERNAL, method=cv2.CHAIN_APPROX_SIMPLE
         )
         bboxes = []
         for contour in contours:
-            if cv2.contourArea(contour) < 50:
+            if cv2.contourArea(contour) < area_threshold:
                 continue
 
             # x, y, width, height = cv2.boundingRect(contour)
@@ -47,12 +48,11 @@ class BasicDetector:
 
         return bboxes
 
-    def get_frame_difference(self, frame, threshold):
+    def get_frame_difference(self, frame: np.ndarray, threshold: int = None):
         if not threshold:
-            threshold = self.thresh
+            threshold = self.threshold
 
-        frame = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
-        frame = cv2.GaussianBlur(frame, ksize=(5, 5), sigmaX=0)
+        frame = convert_to_grayscale(frame)
 
         frame_diff = cv2.absdiff(self.background, frame)
         frame_diff = cv2.dilate(frame_diff, np.ones((5, 5)), 1)
@@ -71,53 +71,38 @@ class AverageDetector:
     def __init__(
         self,
         background: np.ndarray = None,
-        thresh: int = None,
+        threshold: int = None,
         alpha: float = None,
     ):
-        self.background = background
-        if self.background is not None:
-            if self.background.shape[-1] == 3:
-                self.background = cv2.cvtColor(background, cv2.COLOR_RGB2GRAY)
-            self.background = self.background.astype(np.float32)
-
-        if thresh:
-            self.thresh = thresh
+        if background:
+            self.background = convert_to_grayscale(background).astype(np.float32)
         else:
-            self.thresh = 125
+            self.background = background
+
+        if threshold:
+            self.threshold = threshold
+        else:
+            self.threshold = 125
 
         if alpha:
             self.alpha = alpha
         else:
             self.alpha = -1
 
-    def detect(self, frame, threshold: int = None):
+    def detect(self, frame, diff_threshold: int = None, area_threshold: int = 50):
         if self.background is None:
-            self.background = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY).astype(np.float32)
+            self.background = convert_to_grayscale(frame).astype(np.float32)
 
             return []
 
-        if not threshold:
-            if self.thresh:
-                threshold = self.thresh
-            else:
-                self.thresh = 120
-                threshold = 120
-
-        frame = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
-        frame = cv2.GaussianBlur(frame, ksize=(5, 5), sigmaX=0)
-
-        frame_diff = cv2.absdiff(frame, cv2.convertScaleAbs(self.background))
-        frame_diff = cv2.dilate(frame_diff, np.ones((5, 5)), 1)
-        frame_diff = cv2.threshold(
-            frame_diff, thresh=threshold, maxval=255, type=cv2.THRESH_BINARY
-        )[1]
+        frame_diff = self.get_frame_difference(frame, diff_threshold)
 
         contours, _ = cv2.findContours(
             frame_diff, mode=cv2.RETR_EXTERNAL, method=cv2.CHAIN_APPROX_SIMPLE
         )
         bboxes = []
         for contour in contours:
-            if cv2.contourArea(contour) < 50:
+            if cv2.contourArea(contour) < area_threshold:
                 continue
 
             # x, y, width, height = cv2.boundingRect(contour)
@@ -130,19 +115,14 @@ class AverageDetector:
 
     def get_frame_difference(self, frame, threshold):
         if self.background is None:
-            self.background = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY).astype(np.float32)
+            self.background = convert_to_grayscale(frame).astype(np.float32)
 
             return []
 
         if not threshold:
-            if self.thresh:
-                threshold = self.thresh
-            else:
-                self.thresh = 120
-                threshold = 120
+            threshold = self.threshold
 
-        frame = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
-        frame = cv2.GaussianBlur(frame, ksize=(5, 5), sigmaX=0)
+        frame = convert_to_grayscale(frame)
 
         frame_diff = cv2.absdiff(frame, cv2.convertScaleAbs(self.background))
         frame_diff = cv2.dilate(frame_diff, np.ones((5, 5)), 1)
@@ -163,18 +143,15 @@ class MogDetector:
         self.background_substractor = cv2.createBackgroundSubtractorMOG2()
         self.background_substractor.setShadowValue(0)
 
-    def detect(self, frame, threshold: int = None):
-        frame = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
-        frame = cv2.GaussianBlur(frame, ksize=(5, 5), sigmaX=0)
-
-        foreground = self.background_substractor.apply(frame)
+    def detect(self, frame, area_threshold: int = 50):
+        frame_diff = self.get_frame_difference(frame)
 
         contours, _ = cv2.findContours(
-            foreground, mode=cv2.RETR_EXTERNAL, method=cv2.CHAIN_APPROX_SIMPLE
+            frame_diff, mode=cv2.RETR_EXTERNAL, method=cv2.CHAIN_APPROX_SIMPLE
         )
         bboxes = []
         for contour in contours:
-            if cv2.contourArea(contour) < 50:
+            if cv2.contourArea(contour) < area_threshold:
                 continue
 
             # x, y, width, height = cv2.boundingRect(contour)
@@ -183,8 +160,7 @@ class MogDetector:
         return bboxes
 
     def get_frame_difference(self, frame):
-        frame = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
-        frame = cv2.GaussianBlur(frame, ksize=(5, 5), sigmaX=0)
+        frame = convert_to_grayscale(frame)
 
         foreground = self.background_substractor.apply(frame)
 
