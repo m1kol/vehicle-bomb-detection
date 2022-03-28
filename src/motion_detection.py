@@ -74,7 +74,7 @@ class AverageDetector:
         threshold: int = None,
         alpha: float = None,
     ):
-        if background:
+        if background is not None:
             self.background = convert_to_grayscale(background).astype(np.float32)
         else:
             self.background = background
@@ -95,6 +95,7 @@ class AverageDetector:
 
             return []
 
+        frame = convert_to_grayscale(frame)
         frame_diff = self.get_frame_difference(frame, diff_threshold)
 
         contours, _ = cv2.findContours(
