@@ -13,7 +13,8 @@ scikit-learn
 opencv-python
 Pillow
 
-
-# jupyter for development
+# development
 jupyter
 jedi==0.17.2
+ipython
+black
