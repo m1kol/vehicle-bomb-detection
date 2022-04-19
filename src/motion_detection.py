@@ -14,8 +14,8 @@ def convert_to_grayscale(img: np.ndarray, ksize: tuple = (3, 3)) -> np.ndarray:
 
 class BasicDetector:
     """
-    Basic detector that uses a reference background image to get the difference with
-    the current frame.
+    Basic detector that uses a reference background image to calculate the difference with
+    the provided frame image.
     """
 
     def __init__(self, background: np.ndarray):
@@ -46,7 +46,9 @@ class BasicDetector:
         frame = convert_to_grayscale(frame)
 
         frame_diff = cv2.absdiff(self.background, frame)
-        frame_diff = cv2.dilate(frame_diff, np.ones((5, 5)), iterations=1)
+        frame_diff = cv2.morphologyEx(
+            frame_diff, cv2.MORPH_CLOSE, np.ones((5, 5), dtype=np.uint8)
+        )
         frame_diff = cv2.threshold(
             frame_diff, thresh=threshold, maxval=255, type=cv2.THRESH_BINARY
         )[1]
@@ -104,7 +106,9 @@ class AverageDetector:
         frame = convert_to_grayscale(frame)
 
         frame_diff = cv2.absdiff(frame, cv2.convertScaleAbs(self.background))
-        frame_diff = cv2.dilate(frame_diff, np.ones((5, 5)), 1)
+        frame_diff = cv2.morphologyEx(
+            frame_diff, cv2.MORPH_CLOSE, np.ones((5, 5), dtype=np.uint8)
+        )
         frame_diff = cv2.threshold(
             frame_diff, thresh=threshold, maxval=255, type=cv2.THRESH_BINARY
         )[1]
@@ -119,8 +123,9 @@ class MogDetector:
 
     def __init__(self, background_ratio: float = None) -> None:
         self.background_ratio = background_ratio
-        self.background_substractor = cv2.createBackgroundSubtractorMOG2()
-        self.background_substractor.setShadowValue(0)
+        self.background_substractor = cv2.createBackgroundSubtractorMOG2(
+            detectShadows=False
+        )
 
     def detect(self, frame, area_threshold: int = 50):
         frame_diff = self.get_frame_difference(frame)
@@ -140,6 +145,9 @@ class MogDetector:
     def get_frame_difference(self, frame):
         frame = convert_to_grayscale(frame)
 
-        foreground = self.background_substractor.apply(frame)
+        foreground = self.background_substractor.apply(frame, learningRate=0.3)
+        foreground = cv2.morphologyEx(
+            foreground, cv2.MORPH_CLOSE, np.ones((5, 5), dtype=np.uint8)
+        )
 
         return foreground
